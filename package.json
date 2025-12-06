@@ -1,0 +1,6 @@
+{
+  "name": "amazonia-pro",
+  "scripts": {
+    "start": "npx http-server . -p $PORT"
+  }
+}
