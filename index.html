@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazonia.clon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #EAEDED; }
+        .amazon-btn { background: #FFD814; border-color: #FCD200; border-radius: 8px; box-shadow: 0 2px 5px 0 rgba(213,217,217,.5); }
+        .amazon-btn:hover { background: #F7CA00; border-color: #F2C200; cursor: pointer; }
+        .nav-sprite { background-color: #131921; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="app"></div>
+
+    <script>
+        // --- 1. CONFIGURACIÓN Y ESTADO ---
+        const DEMO_MONEY = 1000;
+        
+        // Base de datos inicial (Seed Data) si está vacía
+        const seedProducts = [
+            { id: 1, name: "Echo Dot (5.ª generación)", price: 49.99, image: "https://m.media-amazon.com/images/I/71C3lbbeLsL._AC_SX679_.jpg", description: "El mejor sonido hasta la fecha." },
+            { id: 2, name: "PlayStation 5 Consola", price: 499.00, image: "https://m.media-amazon.com/images/I/51051FiD9UL._SX522_.jpg", description: "Juega sin límites." },
+            { id: 3, name: "Kindle Paperwhite", price: 139.99, image: "https://placehold.co/400x400/png?text=Kindle+Paperwhite", description: "Ahora con pantalla de 6.8 pulgadas." },
+            { id: 4, name: "Apple MacBook Air M1", price: 999.00, image: "https://m.media-amazon.com/images/I/71TPda7cwUL._AC_SX679_.jpg", description: "Chip M1 de Apple para un rendimiento gigante." }
+        ];
+
+        // Estado de la aplicación
+        let state = {
+            user: null, // null, o objeto usuario
+            view: 'login', // login, register, store, dashboard, cart
+            cart: [],
+            products: [],
+            searchTerm: ''
+        };
+
+        // --- 2. SERVICIOS (Lógica de Negocio) ---
+        const Storage = {
+            init() {
+                if (!localStorage.getItem('products')) {
+                    localStorage.setItem('products', JSON.stringify(seedProducts));
+                }
+                state.products = JSON.parse(localStorage.getItem('products'));
+                
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    state.user = JSON.parse(savedUser);
+                    state.view = state.user.role === 'seller' ? 'dashboard' : 'store';
+                }
+            },
+            saveUser(user) {
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                users.push(user);
+                localStorage.setItem('users', JSON.stringify(users));
+                this.setCurrentUser(user);
+            },
+            login(email) {
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                return users.find(u => u.email === email);
+            },
+            setCurrentUser(user) {
+                if(user) localStorage.setItem('currentUser', JSON.stringify(user));
+                else localStorage.removeItem('currentUser');
+                state.user = user;
+            },
+            addProduct(product) {
+                state.products.push(product);
+                localStorage.setItem('products', JSON.stringify(state.products));
+                render();
+            },
+            updateBalance(newBalance) {
+                state.user.balance = newBalance;
+                this.setCurrentUser(state.user);
+                // Actualizar en la lista general de usuarios también
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                let idx = users.findIndex(u => u.email === state.user.email);
+                if(idx !== -1) {
+                    users[idx].balance = newBalance;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+        };
+
+        // --- 3. FUNCIONES DE RENDERIZADO (UI) ---
+        
+        function renderNavbar() {
+            if (!state.user) return '';
+            const cartCount = state.cart.reduce((acc, item) => acc + item.quantity, 0);
+            return `
+                <nav class="nav-sprite p-4 flex items-center justify-between sticky top-0 z-50">
+                    <div class="font-bold text-2xl cursor-pointer" onclick="navigate('${state.user.role === 'seller' ? 'dashboard' : 'store'}')">
+                        Amazonia<span class="text-orange-400">.clon</span>
+                    </div>
+                    
+                    ${state.user.role === 'buyer' ? `
+                    <div class="flex-grow mx-8 max-w-2xl">
+                        <div class="flex">
+                            <input type="text" placeholder="Buscar productos..." 
+                                oninput="handleSearch(this.value)"
+                                class="w-full p-2 rounded-l text-black outline-none">
+                            <button class="bg-orange-400 p-2 rounded-r hover:bg-orange-500 text-black">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ` : '<div class="flex-grow text-center text-gray-400">Panel de Vendedor</div>'}
+
+                    <div class="flex items-center gap-6 text-sm text-white">
+                        <div>
+                            <div class="text-xs text-gray-300">Hola, ${state.user.name}</div>
+                            <div class="font-bold">Saldo: $${state.user.balance.toFixed(2)}</div>
+                        </div>
+                        ${state.user.role === 'buyer' ? `
+                        <div class="cursor-pointer relative" onclick="navigate('cart')">
+                            <i class="fas fa-shopping-cart text-2xl"></i>
+                            <span class="font-bold">Carrito</span>
+                            ${cartCount > 0 ? `<span class="absolute -top-1 left-2 bg-orange-500 text-black rounded-full h-5 w-5 flex items-center justify-center font-bold text-xs">${cartCount}</span>` : ''}
+                        </div>
+                        ` : ''}
+                        <button onclick="handleLogout()" class="text-xs hover:text-orange-400 font-bold">Cerrar Sesión</button>
+                    </div>
+                </nav>
+            `;
+        }
+
+        function renderLogin() {
+            return `
+                <div class="min-h-screen flex flex-col items-center justify-center bg-white">
+                    <div class="mb-4 text-4xl font-bold">Amazonia<span class="text-orange-400">.clon</span></div>
+                    <div class="border p-8 rounded shadow-sm w-full max-w-sm">
+                        <h1 class="text-3xl mb-4 font-normal">Iniciar Sesión</h1>
+                        <form onsubmit="handleLoginSubmit(event)">
+                            <label class="block text-sm font-bold mb-1">Email</label>
+                            <input type="email" name="email" required class="w-full border p-2 rounded mb-4 focus:ring-2 focus:ring-orange-400 outline-none">
+                            <button class="amazon-btn w-full p-2 text-sm font-normal">Continuar</button>
+                        </form>
+                        <div class="mt-4 text-xs text-gray-600 text-center">
+                            <p>¿Nuevo en Amazonia?</p>
+                            <button onclick="navigate('register')" class="w-full mt-2 bg-gray-100 border p-2 rounded hover:bg-gray-200">Crea tu cuenta de Amazonia</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRegister() {
+            return `
+                <div class="min-h-screen flex flex-col items-center justify-center bg-white">
+                    <div class="mb-4 text-4xl font-bold">Amazonia<span class="text-orange-400">.clon</span></div>
+                    <div class="border p-8 rounded shadow-sm w-full max-w-sm">
+                        <h1 class="text-3xl mb-4 font-normal">Crear cuenta</h1>
+                        <form onsubmit="handleRegisterSubmit(event)">
+                            <label class="block text-sm font-bold mb-1">Tu nombre</label>
+                            <input type="text" name="name" required class="w-full border p-2 rounded mb-3 focus:ring-2 focus:ring-orange-400 outline-none">
+                            
+                            <label class="block text-sm font-bold mb-1">Email</label>
+                            <input type="email" name="email" required class="w-full border p-2 rounded mb-3 focus:ring-2 focus:ring-orange-400 outline-none">
+                            
+                            <label class="block text-sm font-bold mb-1">Contraseña</label>
+                            <input type="password" id="passInput" required class="w-full border p-2 rounded mb-1 focus:ring-2 focus:ring-orange-400 outline-none" 
+                                oninput="checkStrength(this.value)">
+                            
+                            <div class="h-1 w-full bg-gray-200 rounded mb-1 overflow-hidden">
+                                <div id="strengthBar" class="h-full w-0 transition-all duration-300 bg-red-500"></div>
+                            </div>
+                            <p id="strengthText" class="text-xs text-gray-500 mb-4 text-right">Insegura</p>
+
+                            <label class="block text-sm font-bold mb-1">Tipo de cuenta</label>
+                            <select name="role" class="w-full border p-2 rounded mb-6 bg-white">
+                                <option value="buyer">Comprador (Quiero gastar)</option>
+                                <option value="seller">Vendedor (Quiero vender)</option>
+                            </select>
+
+                            <button class="amazon-btn w-full p-2 text-sm font-normal">Crear cuenta en Amazonia</button>
+                        </form>
+                        <button onclick="navigate('login')" class="text-sm text-blue-600 hover:underline mt-4 block w-full text-center">Ya tengo cuenta</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStore() {
+            const filtered = state.products.filter(p => p.name.toLowerCase().includes(state.searchTerm.toLowerCase()));
+            
+            let html = `
+                <div class="container mx-auto p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            `;
+            
+            if (filtered.length === 0) {
+                html += `<div class="col-span-4 text-center py-10">No se encontraron productos.</div>`;
+            }
+
+            filtered.forEach(p => {
+                html += `
+                    <div class="bg-white p-4 border rounded hover:shadow-lg transition flex flex-col h-full">
+                        <div class="h-48 flex items-center justify-center mb-4 bg-gray-50">
+                            <img src="${p.image}" class="max-h-full max-w-full object-contain">
+                        </div>
+                        <div class="flex-grow">
+                            <h2 class="text-lg font-medium hover:text-orange-600 cursor-pointer text-ellipsis overflow-hidden line-clamp-2">${p.name}</h2>
+                            <div class="text-sm text-gray-500 mb-2">${p.description}</div>
+                            <div class="text-2xl font-medium mt-1">
+                                <span class="text-xs align-top">$</span>${Math.floor(p.price)}<span class="text-xs align-top">${(p.price % 1).toFixed(2).substring(2)}</span>
+                            </div>
+                        </div>
+                        <button onclick="addToCart(${p.id})" class="amazon-btn w-full mt-4 py-1 text-sm rounded-full">Agregar al Carrito</button>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            return html;
+        }
+
+        function renderCart() {
+            const total = state.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            
+            if(state.cart.length === 0) {
+                return `
+                    <div class="container mx-auto p-6 bg-white mt-6 max-w-4xl shadow-sm">
+                        <h2 class="text-2xl font-bold mb-4">Tu carrito de Amazonia está vacío</h2>
+                        <button onclick="navigate('store')" class="text-blue-600 hover:underline">Ir a comprar ofertas del día</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="container mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3 bg-white p-6 shadow-sm">
+                        <h2 class="text-2xl font-normal border-b pb-2 mb-4">Carrito de compras</h2>
+                        ${state.cart.map(item => `
+                            <div class="flex gap-4 py-4 border-b last:border-0">
+                                <img src="${item.image}" class="w-24 h-24 object-contain">
+                                <div class="flex-grow">
+                                    <h3 class="font-bold text-lg text-blue-700">${item.name}</h3>
+                                    <div class="text-red-700 font-bold">$${item.price.toFixed(2)}</div>
+                                    <div class="text-sm mt-2">Cantidad: ${item.quantity}</div>
+                                    <button onclick="removeFromCart(${item.id})" class="text-xs text-blue-600 hover:underline mt-2">Eliminar</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="lg:col-span-1 bg-white p-6 shadow-sm h-fit">
+                        <div class="text-lg mb-4">Subtotal (${state.cart.length} productos): <span class="font-bold text-red-700">$${total.toFixed(2)}</span></div>
+                        <button onclick="handleCheckout()" class="amazon-btn w-full py-2 rounded-lg shadow text-sm">Proceder al pago</button>
+                        ${total > state.user.balance ? `<div class="text-red-500 text-xs mt-2 text-center">Saldo insuficiente ($${state.user.balance})</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboard() {
+            return `
+                <div class="container mx-auto p-6 max-w-2xl">
+                    <div class="bg-white p-6 shadow-sm border rounded">
+                        <h2 class="text-2xl font-bold mb-6">Panel de Vendedor</h2>
+                        <form onsubmit="handleProductSubmit(event)">
+                            <div class="mb-4">
+                                <label class="block text-sm font-bold mb-1">Nombre del Producto</label>
+                                <input type="text" name="prodName" required class="w-full border p-2 rounded">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-bold mb-1">Precio (USD)</label>
+                                <input type="number" step="0.01" name="prodPrice" required class="w-full border p-2 rounded">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-bold mb-1">URL de Imagen</label>
+                                <input type="url" name="prodImg" placeholder="https://..." required class="w-full border p-2 rounded">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-bold mb-1">Descripción Corta</label>
+                                <input type="text" name="prodDesc" required class="w-full border p-2 rounded">
+                            </div>
+                            <button class="amazon-btn w-full py-2 font-bold">Publicar Producto</button>
+                        </form>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-xl font-bold mb-4">Tus Productos Activos</h3>
+                        <div class="bg-white border rounded p-4">
+                             ${state.products.length > 0 ? state.products.map(p => `
+                                <div class="flex justify-between items-center border-b py-2 last:border-0">
+                                    <span>${p.name}</span>
+                                    <span class="font-bold">$${p.price}</span>
+                                </div>
+                             `).join('') : '<p class="text-gray-500">Aún no hay productos.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            let content = '';
+            
+            if (state.view === 'login') content = renderLogin();
+            else if (state.view === 'register') content = renderRegister();
+            else {
+                // Layout autenticado
+                content = renderNavbar();
+                if (state.view === 'store') content += renderStore();
+                else if (state.view === 'cart') content += renderCart();
+                else if (state.view === 'dashboard') content += renderDashboard();
+            }
+            app.innerHTML = content;
+        }
+
+        // --- 4. CONTROLADORES (Event Handlers) ---
+        
+        function navigate(viewName) {
+            state.view = viewName;
+            state.searchTerm = ''; // Limpiar búsqueda al cambiar vista
+            render();
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newUser = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                role: formData.get('role'),
+                balance: DEMO_MONEY
+            };
+            
+            if(Storage.login(newUser.email)) {
+                alert('Este email ya existe');
+                return;
+            }
+            
+            Storage.saveUser(newUser);
+            state.user = newUser;
+            state.view = newUser.role === 'seller' ? 'dashboard' : 'store';
+            render();
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = new FormData(e.target).get('email');
+            const user = Storage.login(email);
+            if (user) {
+                Storage.setCurrentUser(user);
+                state.view = user.role === 'seller' ? 'dashboard' : 'store';
+                render();
+            } else {
+                alert('Usuario no encontrado. Por favor regístrate.');
+            }
+        }
+
+        function handleLogout() {
+            Storage.setCurrentUser(null);
+            state.view = 'login';
+            state.cart = [];
+            render();
+        }
+
+        function handleSearch(term) {
+            state.searchTerm = term;
+            if(state.view !== 'store') state.view = 'store';
+            render();
+        }
+
+        function addToCart(productId) {
+            const product = state.products.find(p => p.id === productId);
+            const existing = state.cart.find(i => i.id === productId);
+            
+            if (existing) existing.quantity++;
+            else state.cart.push({ ...product, quantity: 1 });
+            
+            render(); // Re-render navbar count
+            
+            // Pequeña animación visual (opcional)
+            alert(`¡${product.name} agregado al carrito!`);
+        }
+
+        function removeFromCart(id) {
+            state.cart = state.cart.filter(i => i.id !== id);
+            render();
+        }
+
+        function handleCheckout() {
+            const total = state.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            if (state.user.balance >= total) {
+                Storage.updateBalance(state.user.balance - total);
+                state.cart = [];
+                alert('¡Compra exitosa! Tu pedido llegará mañana.');
+                navigate('store');
+            } else {
+                alert('Saldo insuficiente. Elimina productos o contacta soporte.');
+            }
+        }
+
+        function handleProductSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newProd = {
+                id: Date.now(),
+                name: formData.get('prodName'),
+                price: parseFloat(formData.get('prodPrice')),
+                image: formData.get('prodImg'),
+                description: formData.get('prodDesc')
+            };
+            Storage.addProduct(newProd);
+            e.target.reset();
+            alert('Producto publicado exitosamente');
+        }
+        function checkStrength(password) {
+            const bar = document.getElementById('strengthBar');
+            const text = document.getElementById('strengthText');
+            let strength = 0;
+            
+            // Reglas de seguridad (Tu especialidad)
+            if (password.length > 5) strength++; // Longitud mínima
+            if (password.length > 8) strength++; // Longitud buena
+            if (/[A-Z]/.test(password)) strength++; // Mayúsculas
+            if (/[0-9]/.test(password)) strength++; // Números
+            if (/[^A-Za-z0-9]/.test(password)) strength++; // Caracteres especiales
+            
+            const colors = ['bg-red-500', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500', 'bg-green-600'];
+            const texts = ['Muy débil', 'Débil', 'Regular', 'Buena', 'Segura', 'Muy Segura'];
+            
+            // Actualizar UI
+            const index = Math.min(strength, 5);
+            bar.className = `h-full transition-all duration-300 ${colors[index]}`;
+            bar.style.width = `${(index + 1) * 20}%`; // 20%, 40%, etc.
+            text.innerText = texts[index];
+        }
+
+        // --- INICIO ---
+        Storage.init();
+        render();
+
+    </script>
+</body>
+</html>
