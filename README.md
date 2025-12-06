@@ -3,7 +3,6 @@
 > **Prueba Técnica - Team Leader**
 > *Desarrollo de una plataforma E-commerce completa tipo SPA (Single Page Application) en menos de 48 horas.*
 
-![Amazonia Pro Banner](https://via.placeholder.com/1000x300/131921/FFD814?text=Amazonia+Pro+|+Security+Edition)
 
 ## 📋 Descripción del Proyecto
 
