@@ -3,6 +3,7 @@
 > **Prueba Técnica - Team Leader**
 > *Desarrollo de una plataforma E-commerce completa tipo SPA (Single Page Application) en menos de 48 horas.*
 
+![Amazonia Pro Banner](https://via.placeholder.com/1000x300/131921/FFD814?text=Amazonia+Pro+|+Security+Edition)
 
 ## 📋 Descripción del Proyecto
 
@@ -33,4 +34,57 @@ Este proyecto destaca por integrar módulos de seguridad simulada para concienci
 
 ### 💼 Panel de Gestión (Seller)
 * **Dashboard Dinámico:** Interfaz dedicada para vendedores.
-* **Gestión de Invent
+* **Gestión de Inventario:** Carga de productos (Imagen, Precio, Descripción HTML) que se reflejan instantáneamente en la tienda.
+* **Persistencia:** Todo el inventario se guarda en `LocalStorage`.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+El proyecto fue diseñado para ser **ligero, rápido y universal**:
+
+| Tecnología | Uso |
+|------------|-----|
+| **HTML5** | Estructura semántica. |
+| **JavaScript (ES6+)** | Lógica SPA, Enrutamiento, Gestión de Estado y Persistencia (`LocalStorage`). |
+| **Tailwind CSS (CDN)** | Diseño UI moderno, responsive y animaciones. |
+| **SweetAlert2** | Sistema de notificaciones y modales profesionales. |
+| **FontAwesome** | Iconografía vectorial. |
+
+---
+
+## ⚙️ Instalación y Uso
+
+Este proyecto no requiere servidores ni instalación de dependencias.
+
+1.  **Clonar el repositorio:**
+    ```bash
+    git clone [https://github.com/aleisii/Amazonia-Pro-Security.git](https://github.com/aleisii/Amazonia-Pro-Security.git)
+    ```
+2.  **Ejecutar:**
+    Simplemente abre el archivo `index.html` en cualquier navegador web moderno (Chrome, Edge, Firefox).
+
+### 🧪 Guía de Pruebas (Demo)
+
+Para probar la experiencia completa:
+
+1.  **Como Vendedor (Para poblar la tienda):**
+    * Regístrate seleccionando el rol **"Vendedor"**.
+    * Ve al "Panel Vendedor" y agrega un producto.
+    * *Nota: Si la tienda inicia vacía, es intencional (Empty State) hasta que se cree stock.*
+
+2.  **Como Comprador:**
+    * Regístrate con rol **"Comprador"**.
+    * Prueba el cupón `SENA2025` en el checkout para un **20% de descuento**.
+    * Activa **Prime** en tu perfil para envío gratis.
+    * Recarga tu **Billetera** para pagar con saldo.
+
+---
+
+## 📄 Licencia y Créditos
+
+Este proyecto fue desarrollado como parte de un proceso de selección técnica para el rol de **Team Leader**.
+Desarrollado con asistencia de IA (Gemini & Google AI Studio) para optimización de arquitectura en plazos cortos.
+
+---
+*Hecho con código limpio y pasión por la seguridad.* 🔒
