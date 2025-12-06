@@ -1,18 +1,37 @@
-# Amazonia Clon - Security Edition 🔒
+# Amazonia Pro - Security Edition 🛡️
 
-Este proyecto es una prueba técnica para el rol de Team Leader. Consiste en un prototipo funcional de E-commerce desarrollado con **JavaScript Vanilla** y **Tailwind CSS**.
+> **Prueba Técnica - Team Leader**
+> *Desarrollo de una plataforma E-commerce completa tipo SPA (Single Page Application) en menos de 48 horas.*
+
+![Amazonia Pro Banner](https://via.placeholder.com/1000x300/131921/FFD814?text=Amazonia+Pro+|+Security+Edition)
+
+## 📋 Descripción del Proyecto
+
+**Amazonia Pro** es una simulación de alto nivel de un entorno de comercio electrónico, diseñada con un enfoque **Security-First** (Seguridad Primero). 
+
+A diferencia de los clones tradicionales, este proyecto implementa una arquitectura **SPA (Single Page Application)** construida puramente con **JavaScript Vanilla** y **Tailwind CSS**, sin dependencias de compilación (No Node.js/npm required), garantizando portabilidad total y cero errores de despliegue.
+
+### 🎯 Enfoque en Seguridad Digital (Perfil SENA)
+Este proyecto destaca por integrar módulos de seguridad simulada para concienciar sobre buenas prácticas:
+* **Validación de Credenciales:** Medidor de entropía de contraseñas en tiempo real.
+* **MFA Simulado:** Interfaz de Autenticación de Doble Factor (2FA).
+* **Auditoría:** Logs de acceso con registro de IP y Timestamp en el perfil de usuario.
+* **Transacciones Seguras:** UI de encriptación SSL durante el checkout.
+
+---
 
 ## 🚀 Características Principales
-* **Gestión de Roles:** Sistema de Login diferenciado para Compradores y Vendedores.
-* **Persistencia de Datos:** Uso de `localStorage` para mantener sesiones, carritos e inventario sin necesidad de Backend.
-* **Simulación Financiera:** Billetera virtual con lógica de validación de fondos.
 
-## 🛡️ Módulo de Seguridad (Highlight)
-Como valor agregado enfocado en *Digital Security Control*, se implementó un sistema de **análisis de contraseñas en tiempo real** en el registro de usuarios.
-* Evalúa longitud, uso de mayúsculas, números y caracteres especiales.
-* Proporciona feedback visual inmediato al usuario sobre la robustez de su credencial.
+### 🛒 Experiencia de Compra (Buyer)
+* **Navegación SPA:** Transiciones fluidas entre Vistas (Home, Carrito, Perfil) sin recargas de página.
+* **Búsqueda en Tiempo Real:** Filtrado dinámico de productos.
+* **Checkout de 3 Pasos:** Dirección -> Pasarela de Pago (Tarjeta/Saldo) -> Resumen.
+* **Tracking de Pedidos:** Barra de progreso animada que simula el estado logístico (Preparando -> En Camino -> Entregado).
+* **Ecosistema Completo:**
+    * **Billetera Digital:** Simulación de recarga de saldo.
+    * **Membresía Prime:** Gestión de estado Prime para envíos gratuitos.
+    * **Listas de Deseos:** Guardado persistente de favoritos.
 
-## 🛠️ Tecnologías
-* HTML5
-* JavaScript (ES6+)
-* Tailwind CSS (CDN)
+### 💼 Panel de Gestión (Seller)
+* **Dashboard Dinámico:** Interfaz dedicada para vendedores.
+* **Gestión de Invent
