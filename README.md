@@ -86,4 +86,6 @@ Este proyecto fue desarrollado como parte de un proceso de selección técnica p
 Desarrollado con asistencia de IA (Gemini & Google AI Studio) para optimización de arquitectura en plazos cortos.
 
 ---
-*Hecho con código limpio y pasión por la seguridad.* 🔒
+*Hecho con código limpio y pasión por la seguridad.* 🔒 
+
+
