@@ -11,7 +11,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ESCUCHAR EN 0.0.0.0 (Esto es lo que arregla el offline)
+// ESCUCHAR EN 0.0.0.0 (Esto es la clave para que Railway lo vea)
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
 });
